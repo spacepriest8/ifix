@@ -1,0 +1,53 @@
+services:
+  mongodb:
+    container_name: mongodb
+    image: mongo
+    restart: always
+    ports:
+      - 27019:27017  # Expose MongoDB's internal 27017 port as 27019 on the host
+    command: mongod --port 27017  # MongoDB listens on 27017 internally
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - ifix_network
+
+  mongo-express:
+    container_name: ifix-mongo-express
+    image: mongo-express
+    restart: always
+    ports:
+      - 8082:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongodb:27017/ifixdb?authSource=admin  # Use service name `mongodb`
+      ME_CONFIG_BASICAUTH: "false"
+    networks:
+      - ifix_network
+    command: ["sh", "-c", "until nc -z mongodb 27017; do echo 'Waiting for MongoDB...'; sleep 3; done; /docker-entrypoint.sh"]
+
+  app:
+    container_name: ifix-app
+    build:
+      context: .
+    restart: always
+    depends_on:
+      - mongodb
+      - mongo-express
+    environment:
+      MONGO_URI: mongodb://root:example@mongodb:27017/ifixdb?authSource=admin  # Use service name `mongodb`
+    ports:
+      - 5000:5000
+    command: npm start
+    networks:
+      - ifix_network
+
+volumes:
+  mongo_data:
+
+networks:
+  ifix_network:
+    driver: bridge

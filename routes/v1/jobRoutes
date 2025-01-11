@@ -1,0 +1,32 @@
+const express = require('express');
+const {
+  createJob,
+  getClientJobs,
+  getAvailableJobs,
+  getJobsByCategory,
+  applyForJob,
+  pairServiceProvider,
+  completeJob,
+} = require('../../controllers/v1/jobControllers')
+const router = express.Router();
+const { protect } = require('../../middleware/authMiddleware');
+
+// Client routes for creating and viewing jobs
+router.post('/create', protect, createJob);  // Client creates a job
+router.get('/client', protect, getClientJobs);  // Client views their jobs
+
+// Route to get jobs by category (for filtering)
+router.get('/category/:category', protect, getJobsByCategory);  // Get jobs by category
+
+
+// Service provider routes for viewing and applying for jobs
+router.get('/available', protect, getAvailableJobs);  // Service provider views available jobs
+router.post('/apply/:jobId', protect, applyForJob);  // Service provider applies for a job
+
+// Client can pair a service provider with a job
+router.post('/pair', protect, pairServiceProvider);  // Client pairs service provider
+
+// Client marks job as completed
+router.post('/complete', protect, completeJob);  // Client marks job as completed
+
+module.exports = router;
